@@ -33,7 +33,7 @@
 			    <div class="panel panel-default">
 			      <div class="panel-heading">
 			        <h5 class="panel-title">
-			          <a data-toggle="collapse" data-parent="#match_configuration" href="#load_setup_match">Configuration</a>
+			          <a data-bs-toggle="collapse" href="#load_setup_match">Configuration</a>
 			        </h5>
 			      </div>
 			      <div id="load_setup_match" class="panel-collapse collapse">

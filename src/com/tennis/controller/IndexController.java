@@ -13,6 +13,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 
@@ -24,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 import com.tennis.containers.Scene;
 import com.tennis.containers.ScoreBug;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -240,7 +241,7 @@ public class IndexController
 	
 	@RequestMapping(value = {"/upload_match_setup_data", "/reset_and_upload_match_setup_data"}
 		,method={RequestMethod.GET,RequestMethod.POST})    
-	public @ResponseBody String uploadFormDataToSessionObjects(MultipartHttpServletRequest request) 
+	public @ResponseBody String uploadFormDataToSessionObjects(HttpServletRequest request) 
 			throws IllegalAccessException, InvocationTargetException, JAXBException, IOException
 	{
 		if (request.getRequestURI().contains("upload_match_setup_data") 
@@ -280,7 +281,7 @@ public class IndexController
 		return objectMapper.writeValueAsString(session_match).toString();
 	}
 	
-	@RequestMapping(value = {"/processTennisProcedures"}, method={RequestMethod.GET,RequestMethod.POST})    
+	@RequestMapping(value = {"/processTennisProcedures.html"}, method={RequestMethod.GET,RequestMethod.POST})    
 	public @ResponseBody String processTennisProcedures(
 			@RequestParam(value = "whatToProcess", required = false, defaultValue = "") String whatToProcess,
 			@RequestParam(value = "valueToProcess", required = false, defaultValue = "") String valueToProcess)
@@ -352,6 +353,10 @@ public class IndexController
 			case TennisUtil.LOAD_MATCH: case TennisUtil.LOAD_SETUP: 
 				session_match = TennisFunctions.populateMatchVariables(tennisService, new ObjectMapper().readValue(
 						new File(TennisUtil.TENNIS_DIRECTORY + TennisUtil.MATCHES_DIRECTORY + valueToProcess), Match.class));					
+				
+				if(session_match.getSets() == null) {
+					session_match.setSets(new ArrayList<Set>());
+				}
 				
 				switch(whatToProcess.toUpperCase()) {
 				case TennisUtil.LOAD_MATCH:
