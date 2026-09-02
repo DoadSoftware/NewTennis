@@ -143,9 +143,6 @@
     <build>
 
         <sourceDirectory>src</sourceDirectory>
-
-        <finalName>NewTennis</finalName>
-
         <plugins>
 
             <plugin>
