@@ -22,8 +22,15 @@ function afterPageLoad(whichPageHasLoaded)
 		$('#homeSecondPlayerId').select2();
 		$('#awayFirstPlayerId').select2();
 		$('#awaySecondPlayerId').select2();
-		addItemsToList('LOAD_SELECTED_TEAM_PLAYERS', document.getElementById('homeTeamId'));
-		addItemsToList('LOAD_SELECTED_TEAM_PLAYERS', document.getElementById('awayTeamId'));
+		if ($('#selectedBroadcaster').val() == 'ATP_2022') {
+			// ATP_2022 has no teams in the database - players are already rendered
+			// server-side into every dropdown, so just hide the team row.
+			$('#team_selection_row').hide();
+		} else {
+			$('#team_selection_row').show();
+			addItemsToList('LOAD_SELECTED_TEAM_PLAYERS', document.getElementById('homeTeamId'));
+			addItemsToList('LOAD_SELECTED_TEAM_PLAYERS', document.getElementById('awayTeamId'));
+		}
 		break;
 	case 'MATCH':
 		if(window.location.href.toLowerCase().includes('/stat_to_match')) {
@@ -94,8 +101,12 @@ function initialiseForm(whatToProcess, dataToProcess)
 	
 	case 'SETUP':
 		if(dataToProcess) {
-			document.getElementById('homeTeamId').value = dataToProcess.homeFirstPlayer.team.teamId;
-			document.getElementById('awayTeamId').value = dataToProcess.awayFirstPlayer.team.teamId;
+			if (dataToProcess.homeFirstPlayer.team) {
+				document.getElementById('homeTeamId').value = dataToProcess.homeFirstPlayer.team.teamId;
+			}
+			if (dataToProcess.awayFirstPlayer.team) {
+				document.getElementById('awayTeamId').value = dataToProcess.awayFirstPlayer.team.teamId;
+			}
 			document.getElementById('matchFileName').value = dataToProcess.matchFileName;
 			document.getElementById('tournament').value = dataToProcess.tournament;
 			document.getElementById('matchIdent').value = dataToProcess.matchIdent;
@@ -566,9 +577,11 @@ function processUserSelection(whichInput)
 			alert('Player dupication found. Please choose different players');
 			return false;
 		}
-		if($('#homeTeamId option:selected').val() == $('#awayTeamId option:selected').val()) {
-			alert('Team dupication found. Please choose different Teams');
-			return false;
+		if ($('#selectedBroadcaster').val() != 'ATP_2022') {
+			if($('#homeTeamId option:selected').val() == $('#awayTeamId option:selected').val()) {
+				alert('Team dupication found. Please choose different Teams');
+				return false;
+			}
 		}
 		if($('#matchType option:selected').val() == 'doubles') {
 			if($('#homeSecondPlayerId option:selected').val() == $('#awaySecondPlayerId option:selected').val()
@@ -1286,7 +1299,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 		    }
 		}
 		break;
-		
+
 	case 'SCOREBUG_OPTION': case 'SCOREBUG-SET_OPTION': case 'SCOREBUG_STATS_OPTION': case 'SPEED_OPTION': case 'SCOREBUG-HEADER_OPTION':
 		switch ($('#selectedBroadcaster').val()) {
 		case 'ATP_2022':
@@ -2462,7 +2475,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 							} else {
 								name = match_data.homeFirstPlayer.full_name;
 							}
-							header_text.innerHTML = name + ' <br>[<span style="color: #FF5733;"> '+match_data.homeFirstPlayer.team.teamName1 + '</span> ]';
+							header_text.innerHTML = name + (match_data.homeFirstPlayer.team ? ' <br>[<span style="color: #FF5733;"> '+match_data.homeFirstPlayer.team.teamName1 + '</span> ]' : '');
 		    				break;
 		    			case 2: //away
 							text = 'away';
@@ -2472,7 +2485,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 							} else {
 								Away_name = match_data.awayFirstPlayer.full_name;
 							}
-							header_text.innerHTML = Away_name +'<br> [ <span style="color: #FF5733;">' + match_data.awayFirstPlayer.team.teamName1 + '</span> ]';
+							header_text.innerHTML = Away_name + (match_data.awayFirstPlayer.team ? '<br> [ <span style="color: #FF5733;">' + match_data.awayFirstPlayer.team.teamName1 + '</span> ]' : '');
 		    				break;
 						}
 						div.appendChild(header_text);
@@ -2660,4 +2673,4 @@ function checkEmpty(inputBox,textToShow) {
 		return false;
 	}
 	return true;	
-}	
+}

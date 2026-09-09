@@ -122,6 +122,7 @@ public class IndexController
 		model.addAttribute("match_files", all_match_files);
 		model.addAttribute("players", tennisService.getAllPlayer());
 		model.addAttribute("teams", tennisService.getAllTeams());
+		model.addAttribute("session_selected_broadcaster", session_selected_broadcaster);
 		model.addAttribute("licence_expiry_message",
 				"Software licence expires on " + new SimpleDateFormat("E, dd MMM yyyy").format(
 				new SimpleDateFormat("yyyy-MM-dd").parse(expiry_date)));
@@ -505,8 +506,8 @@ public class IndexController
 				int home_past_total_score = session_match.getHome_total_score();
 				int away_past_total_score = session_match.getAway_total_score();
 				
-				String home_team = session_match.getHomeFirstPlayer().getTeam().getTeamName1();
-				String away_team = session_match.getAwayFirstPlayer().getTeam().getTeamName1();
+				String home_team = session_match.getHomeFirstPlayer().getTeam() != null ? session_match.getHomeFirstPlayer().getTeam().getTeamName1() : "";
+				String away_team = session_match.getAwayFirstPlayer().getTeam() != null ? session_match.getAwayFirstPlayer().getTeam().getTeamName1() : "";
 				
 //				System.out.println(home_past_total_score+curr_game_home_score);
 //				System.out.println(away_past_total_score+curr_game_away_score);

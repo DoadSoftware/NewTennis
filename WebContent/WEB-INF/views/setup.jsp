@@ -22,6 +22,7 @@
 </head>
 <body onload="afterPageLoad('SETUP');">
 <form:form name="setup_form" method="POST" action="match">
+<input type="hidden" name="selectedBroadcaster" id="selectedBroadcaster" value="${session_selected_broadcaster}"/>
 <div class="content py-5" style="background-color: #EAE8FF; color: #2E008B">
   <div class="container">
 	<div class="row">
@@ -130,7 +131,7 @@
 			  </div>
 			  	<table class="table table-striped table-bordered"> 
 				  <thead>
-			        <tr>
+			        <tr id="team_selection_row">
 			        	<th>Select HOME Team: 
 					      <select id="homeTeamId" name="homeTeamId" 
 					      		onchange="addItemsToList('LOAD_SELECTED_TEAM_PLAYERS', this);"
@@ -156,11 +157,17 @@
 			        	<th>Select HOME First Player: 
 					      <select id="homeFirstPlayerId" name="homeFirstPlayerId" 
 					      		class="browser-default custom-select custom-select-sm">
+							<c:forEach items = "${players}" var = "player">
+					          <option value="${player.playerId}">${player.full_name}</option>
+							</c:forEach>
 					      </select>
 			        	</th>
 			        	<th>Select AWAY First Player: 
 					      <select id="awayFirstPlayerId" name="awayFirstPlayerId" 
 					      		class="browser-default custom-select custom-select-sm">
+							<c:forEach items = "${players}" var = "player">
+					          <option value="${player.playerId}">${player.full_name}</option>
+							</c:forEach>
 					      </select>
 			        	</th>
 				    </tr>
@@ -168,11 +175,17 @@
 			        	<th>Select HOME Second Player: 
 					      <select id="homeSecondPlayerId" name="homeSecondPlayerId" 
 					      		class="browser-default custom-select custom-select-sm">
+							<c:forEach items = "${players}" var = "player">
+					          <option value="${player.playerId}">${player.full_name}</option>
+							</c:forEach>
 					      </select>
 			        	</th>
 			        	<th>Select AWAY Second Player: 
 					      <select id="awaySecondPlayerId" name="awaySecondPlayerId" 
 					      		class="browser-default custom-select custom-select-sm">
+							<c:forEach items = "${players}" var = "player">
+					          <option value="${player.playerId}">${player.full_name}</option>
+							</c:forEach>
 					      </select>
 			        	</th>
 				    </tr>
