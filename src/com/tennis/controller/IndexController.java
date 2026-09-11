@@ -180,8 +180,8 @@ public class IndexController
 			session_Configurations.setBroadcaster(selectedBroadcaster);
 			session_Configurations.setVizscene(vizScene);
 			session_Configurations.setIpAddress(vizIPAddresss);
+			session_Configurations.setPortNumber(Integer.valueOf(vizPortNumber));
 			if(Integer.valueOf(vizPortNumber) != 0) {
-				session_Configurations.setPortNumber(Integer.valueOf(vizPortNumber));
 				session_socket = new Socket(vizIPAddresss, Integer.valueOf(vizPortNumber));
 				print_writer = new PrintWriter(session_socket.getOutputStream(), true);
 			}
@@ -459,10 +459,10 @@ public class IndexController
 							session_match.getSets().get(session_match.getSets().size()-1).getGames().size()-1);
 				} else if(valueToProcess.toUpperCase().contains(TennisUtil.END)) {
 					
+					System.out.println(session_Configurations.getBroadcaster());
 					switch (session_Configurations.getBroadcaster().toUpperCase()) {
 					case TennisUtil.TPL_2023:
-						if(Integer.valueOf(session_match.getSets().get(session_match.getSets().size()-1).getGames().get(
-									session_match.getSets().get(session_match.getSets().size()-1)
+						if(Integer.valueOf(session_match.getSets().get(session_match.getSets().size()-1).getGames().get(session_match.getSets().get(session_match.getSets().size()-1)
 									.getGames().size()-1).getHome_score()) == Integer.valueOf(session_match.getSets().get(session_match.getSets().size()-1).getGames().get(
 									session_match.getSets().get(session_match.getSets().size()-1)
 									.getGames().size()-1).getAway_score())) {
@@ -481,39 +481,35 @@ public class IndexController
 									session_match.getSets().get(session_match.getSets().size()-1)
 									.getGames().size()-1).setGame_winner(valueToProcess.split(",")[1]);
 						}
+						
+						int curr_game_home_score = Integer.valueOf(session_match.getSets().get(session_match.getSets().size()-1).getGames().get(
+								session_match.getSets().get(session_match.getSets().size()-1).getGames().size()-1).getHome_score());
+						
+						int curr_game_away_score = Integer.valueOf(session_match.getSets().get(session_match.getSets().size()-1).getGames().get(
+								session_match.getSets().get(session_match.getSets().size()-1).getGames().size()-1).getAway_score());
+						
+						int home_past_total_score = session_match.getHome_total_score();
+						int away_past_total_score = session_match.getAway_total_score();
+						
+						String home_team = session_match.getHomeFirstPlayer().getTeam() != null ? session_match.getHomeFirstPlayer().getTeam().getTeamName1() : "";
+						String away_team = session_match.getAwayFirstPlayer().getTeam() != null ? session_match.getAwayFirstPlayer().getTeam().getTeamName1() : "";
+						
+//						System.out.println(home_past_total_score+curr_game_home_score);
+//						System.out.println(away_past_total_score+curr_game_away_score);
+						
+						System.out.println(home_team +" : "+(home_past_total_score+curr_game_home_score));
+						System.out.println(away_team+" : "+(away_past_total_score+curr_game_away_score));
 						break;
-
 					default:
 						session_match.getSets().get(session_match.getSets().size()-1).getGames().get(
 								session_match.getSets().get(session_match.getSets().size()-1)
 								.getGames().size()-1).setGame_status(TennisUtil.END);
-							session_match.getSets().get(session_match.getSets().size()-1).getGames().get(
-									session_match.getSets().get(session_match.getSets().size()-1)
-									.getGames().size()-1).setGame_winner(valueToProcess.split(",")[1]);
+						session_match.getSets().get(session_match.getSets().size()-1).getGames().get(
+								session_match.getSets().get(session_match.getSets().size()-1)
+								.getGames().size()-1).setGame_winner(valueToProcess.split(",")[1]);
 						break;
 					}
 				}
-				
-				
-				int curr_game_home_score = Integer.valueOf(session_match.getSets().get(session_match.getSets().size()-1).getGames().get(
-						session_match.getSets().get(session_match.getSets().size()-1)
-						.getGames().size()-1).getHome_score());
-				
-				int curr_game_away_score = Integer.valueOf(session_match.getSets().get(session_match.getSets().size()-1).getGames().get(
-						session_match.getSets().get(session_match.getSets().size()-1)
-						.getGames().size()-1).getAway_score());
-				
-				int home_past_total_score = session_match.getHome_total_score();
-				int away_past_total_score = session_match.getAway_total_score();
-				
-				String home_team = session_match.getHomeFirstPlayer().getTeam() != null ? session_match.getHomeFirstPlayer().getTeam().getTeamName1() : "";
-				String away_team = session_match.getAwayFirstPlayer().getTeam() != null ? session_match.getAwayFirstPlayer().getTeam().getTeamName1() : "";
-				
-//				System.out.println(home_past_total_score+curr_game_home_score);
-//				System.out.println(away_past_total_score+curr_game_away_score);
-				
-				System.out.println(home_team +" : "+(home_past_total_score+curr_game_home_score));
-				System.out.println(away_team+" : "+(away_past_total_score+curr_game_away_score));
 				break;
 			}
 

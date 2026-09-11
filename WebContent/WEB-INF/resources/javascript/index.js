@@ -2607,8 +2607,10 @@ function addItemsToList(whatToProcess, dataToProcess)
 					match_data.sets.forEach(function(set,set_index,set_arr){
 						text = 0; 
 						set.games.forEach(function(game,game_index,game_arr){
-							if(game.game_winner.toLowerCase() == 'home') {
-								text = text + 1;
+							if(game.game_winner != null){
+								if(game.game_winner.toLowerCase() == 'home') {
+									text = text + 1;
+								}
 							}
 							if(game.game_status.toLowerCase() == 'start') {
 								$('#homeScore').val(game.home_score);
@@ -2628,8 +2630,10 @@ function addItemsToList(whatToProcess, dataToProcess)
 					match_data.sets.forEach(function(set,set_index,set_arr){
 						text = 0; 
 						set.games.forEach(function(game,game_index,game_arr){
-							if(game.game_winner.toLowerCase() == 'away') {
-								text = text + 1;
+							if(game.game_winner != null){
+								if(game.game_winner.toLowerCase() == 'away') {
+									text = text + 1;
+								}
 							}
 							if(game.game_status.toLowerCase() == 'start') {
 								$('#awayScore').val(game.away_score);
