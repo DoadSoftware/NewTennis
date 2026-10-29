@@ -544,12 +544,16 @@ function processUserSelection(whichInput)
 		}
 		break;
 	case 'load_scene_btn':
-		/*if(checkEmpty($('#vizIPAddress'),'IP Address Blank') == false
-			|| checkEmpty($('#vizPortNumber'),'Port Number Blank') == false) {
-			return false;
-		}*/
-	  	document.initialise_form.submit();
-		break;
+	    if ($('#matchFormat').val() === 'EXHIBITION') {
+	        document.initialise_form.method = 'post';
+	        document.initialise_form.action = 'exhibition/setup';
+	        document.initialise_form.submit();
+	    } else {
+	        document.initialise_form.method = 'post';
+	        document.initialise_form.action = 'match';
+	        document.initialise_form.submit();
+	    }
+	    break;
 	case 'cancel_match_setup_btn':
 		document.setup_form.method = 'post';
 		document.setup_form.action = 'setup_to_match';

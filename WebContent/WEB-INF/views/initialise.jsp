@@ -31,6 +31,15 @@
           <div class="card-body">
           <div id="initialise_div" style="display:none;">
 		   </div>
+			<div class="form-group row row-bottom-margin ml-2" style="margin-bottom:10px;">
+			    <label for="matchFormat" class="col-sm-4 col-form-label text-left">Match Format</label>
+			    <div class="col-sm-6 col-md-6">
+			        <select id="matchFormat" name="matchFormat" class="browser-default custom-select custom-select-sm">
+			            <option value="NORMAL">Normal Tennis</option>
+			            <option value="EXHIBITION">Exhibition Match</option>
+			        </select>
+			    </div>
+			</div>
 			  <div class="form-group row row-bottom-margin ml-2" style="margin-bottom:5px;">
 			    <label for="selectedBroadcaster" class="col-sm-4 col-form-label text-left">Select Broadcaster </label>
 			    <div class="col-sm-6 col-md-6">
