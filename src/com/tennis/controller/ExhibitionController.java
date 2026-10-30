@@ -37,14 +37,124 @@ public class ExhibitionController {
         return showExhibitionSet(matchId, setIndex, model);
     }    
     
-    @RequestMapping(value = "/exhibition/setup", method = RequestMethod.POST)
-    public String exhibitionSetupPage(ModelMap model) {
+    @RequestMapping(value = "/exhibition/ready", method = {RequestMethod.GET, RequestMethod.POST})
+    public String exhibitionReadyHome(ModelMap model) {
+        try {
+            List<ExhibitionMatch> matches = exhibitionMatchRepository.findAll();
+            model.addAttribute("exhibitionMatches", matches);
+            addExhibitionPlayerNames(model, matches);
+        } catch (IOException ex) {
+            model.addAttribute("exhibitionMatches", java.util.Collections.emptyList());
+            model.addAttribute("playerNames", java.util.Collections.emptyMap());
+            model.addAttribute("savedMatchesError", "Unable to load saved Exhibition matches.");
+        }
+        return "exhibitionReady";
+    }
+
+    @RequestMapping(value = "/exhibition/setup", method = {RequestMethod.GET, RequestMethod.POST})
+    public String exhibitionSetupPage(@RequestParam(value = "matchId", required = false) String matchId, ModelMap model) {
         model.addAttribute("players", tennisService.getAllPlayer());
+        if (matchId != null && !matchId.trim().isEmpty()) {
+            try {
+                ExhibitionMatch match = exhibitionMatchRepository.load(matchId);
+                model.addAttribute("exhibitionMatch", match);
+                model.addAttribute("editMode", true);
+            } catch (IOException | IllegalArgumentException ex) {
+                model.addAttribute("error_message", "Unable to load the selected Exhibition match for editing.");
+                return "error";
+            }
+        } else {
+            model.addAttribute("editMode", false);
+        }
         return "exhibitionSetup";
     }
 
+    @RequestMapping(value = "/exhibition/update", method = RequestMethod.POST)
+    public String updateExhibitionMatch(@RequestParam Map<String, String> params, ModelMap model) {
+        String matchId = params.getOrDefault("matchId", "").trim();
+        try {
+            if (matchId.isEmpty()) throw new IllegalArgumentException("Missing match ID.");
+            ExhibitionMatch existing = exhibitionMatchRepository.load(matchId);
+            String competitionName = params.getOrDefault("competitionName", "").trim();
+            String matchTitle = params.getOrDefault("matchTitle", "").trim();
+            String group1Name = params.getOrDefault("group1Name", "").trim();
+            String group2Name = params.getOrDefault("group2Name", "").trim();
+            if (competitionName.isEmpty() || matchTitle.isEmpty() || group1Name.isEmpty() || group2Name.isEmpty() || group1Name.equalsIgnoreCase(group2Name)) {
+                model.addAttribute("error_message", "Please enter valid match details and two different group names.");
+                model.addAttribute("players", tennisService.getAllPlayer());
+                model.addAttribute("exhibitionMatch", existing);
+                model.addAttribute("editMode", true);
+                return "exhibitionSetup";
+            }
+            ExhibitionMatch updated = new ExhibitionMatch();
+            updated.setMatchId(existing.getMatchId());
+            updated.setMatchFileName(existing.getMatchFileName());
+            updated.setCompetitionName(competitionName);
+            updated.setMatchTitle(matchTitle);
+            updated.setGroup1Name(group1Name);
+            updated.setGroup2Name(group2Name);
+            updated.setMatchStatus(existing.getMatchStatus());
+            updated.setOverallWinnerGroup(existing.getOverallWinnerGroup());
+            for (int i = 0; params.containsKey("sets[" + i + "].setName"); i++) {
+                String prefix = "sets[" + i + "].";
+                String setName = params.getOrDefault(prefix + "setName", "").trim();
+                String setType = params.getOrDefault(prefix + "setType", "");
+                String matchStyle = params.getOrDefault(prefix + "matchStyle", "");
+                List<Integer> group1 = new ArrayList<>();
+                List<Integer> group2 = new ArrayList<>();
+                group1.add(Integer.parseInt(params.getOrDefault(prefix + "group1Player1", "")));
+                group2.add(Integer.parseInt(params.getOrDefault(prefix + "group2Player1", "")));
+                if ("DOUBLES".equals(matchStyle)) {
+                    group1.add(Integer.parseInt(params.getOrDefault(prefix + "group1Player2", "")));
+                    group2.add(Integer.parseInt(params.getOrDefault(prefix + "group2Player2", "")));
+                }
+                List<Integer> allPlayers = new ArrayList<>();
+                allPlayers.addAll(group1);
+                allPlayers.addAll(group2);
+                if (setName.isEmpty() || !("REGULAR".equals(setType) || "SHOOTOUT".equals(setType)) || !("SINGLES".equals(matchStyle) || "DOUBLES".equals(matchStyle)) || allPlayers.stream().distinct().count() != allPlayers.size()) throw new IllegalArgumentException("Set " + (i + 1) + " has invalid details or duplicate players.");
+                for (Integer playerId : allPlayers) if (tennisService.getPlayer(playerId) == null) throw new IllegalArgumentException("Invalid player selected in Set " + (i + 1) + ".");
+                ExhibitionSet set = new ExhibitionSet();
+                set.setSetNumber(i + 1);
+                set.setSetName(setName);
+                set.setSetType(setType);
+                set.setMatchStyle(matchStyle);
+                set.setGroup1PlayerIds(group1);
+                set.setGroup2PlayerIds(group2);
+                set.setGroup1ServingPlayerId(group1.get(0));
+                set.setGroup2ServingPlayerId(null);
+                set.setSetStatus("NOT_STARTED");
+                if (existing.getSets() != null && i < existing.getSets().size()) {
+                    ExhibitionSet previous = existing.getSets().get(i);
+                    boolean sameConfiguration = setType.equals(previous.getSetType()) && matchStyle.equals(previous.getMatchStyle()) && group1.equals(previous.getGroup1PlayerIds()) && group2.equals(previous.getGroup2PlayerIds()) && setName.equals(previous.getSetName());
+                    if (sameConfiguration) {
+                        set.setGroup1Score(previous.getGroup1Score());
+                        set.setGroup2Score(previous.getGroup2Score());
+                        set.setSetStatus(previous.getSetStatus());
+                        set.setSetWinnerGroup(previous.getSetWinnerGroup());
+                        set.setGroup1ServingPlayerId(previous.getGroup1ServingPlayerId());
+                        set.setGroup2ServingPlayerId(previous.getGroup2ServingPlayerId());
+                    }
+                }
+                updated.getSets().add(set);
+            }
+            if (updated.getSets().isEmpty()) throw new IllegalArgumentException("Please configure at least one set.");
+            if (updated.getSets().stream().anyMatch(s -> "COMPLETED".equals(s.getSetStatus())) && existing.getOverallWinnerGroup() != null) {
+                updated.setOverallWinnerGroup(existing.getOverallWinnerGroup());
+                updated.setMatchStatus(existing.getMatchStatus());
+            } else if (!"COMPLETED".equals(existing.getMatchStatus())) {
+                updated.setOverallWinnerGroup(null);
+                updated.setMatchStatus(existing.getMatchStatus());
+            }
+            exhibitionMatchRepository.save(updated);
+            return "redirect:/exhibition/ready";
+        } catch (IOException | IllegalArgumentException ex) {
+            model.addAttribute("error_message", "Unable to update Exhibition match: " + ex.getMessage());
+            model.addAttribute("players", tennisService.getAllPlayer());
+            model.addAttribute("editMode", true);
+            return "exhibitionSetup";
+        }
+    }
 
-    
 	@RequestMapping(value = "/exhibition/start", method = RequestMethod.POST)
 	public String exhibitionStart(@RequestParam Map<String, String> params, HttpSession session, ModelMap model) 
 	{
@@ -59,9 +169,11 @@ public class ExhibitionController {
 	        return "exhibitionSetup";
 	    }
 	
-	    String matchFileName = matchTitle.replaceAll("[^a-zA-Z0-9_-]+", "_").replaceAll("^_+|_+$", "");
-	    if (matchFileName.isBlank()) matchFileName = "Exhibition_Match";
-	    if (matchFileName.length() > 100) matchFileName = matchFileName.substring(0, 100);
+	    String requestedFileName = params.getOrDefault("matchFileName", "").trim();
+        String matchFileName = requestedFileName.isEmpty() ? matchTitle : requestedFileName;
+        matchFileName = matchFileName.trim().replaceFirst("(?i)\\.json$", "").replaceAll("[^a-zA-Z0-9_-]+", "_").replaceAll("^_+|_+$", "");
+        if (matchFileName.isBlank()) matchFileName = "Exhibition_Match";
+        if (matchFileName.length() > 100) matchFileName = matchFileName.substring(0, 100);
 	    
 	    ExhibitionMatch exhibitionMatch = new ExhibitionMatch();
 	    exhibitionMatch.setMatchId(UUID.randomUUID().toString());
@@ -118,7 +230,7 @@ public class ExhibitionController {
 				set.setGroup1PlayerIds(group1);
 				set.setGroup2PlayerIds(group2);
 				set.setGroup1ServingPlayerId(group1.get(0));
-				set.setGroup2ServingPlayerId(group2.get(0));
+				set.setGroup2ServingPlayerId(null);
 				set.setSetStatus("NOT_STARTED");
 				exhibitionMatch.getSets().add(set);
 
@@ -139,7 +251,9 @@ public class ExhibitionController {
 	        exhibitionMatchRepository.save(exhibitionMatch);
 	        session.setAttribute("exhibitionMatch", exhibitionMatch);
 	        model.addAttribute("exhibitionMatch", exhibitionMatch);
-	        model.addAttribute("exhibitionMatches", exhibitionMatchRepository.findAll());
+	        List<ExhibitionMatch> matches = exhibitionMatchRepository.findAll();
+	        model.addAttribute("exhibitionMatches", matches);
+	        addExhibitionPlayerNames(model, matches);
 	        return "exhibitionReady";
 	    } catch (IOException | IllegalArgumentException ex) {
 	        model.addAttribute("error_message", "Unable to save Exhibition match. Please check the match details, filename and directory permissions.");
@@ -373,33 +487,37 @@ public class ExhibitionController {
 	        if (tennisService.getPlayer(playerId) == null) {
 	            model.addAttribute("error_message", "The selected serving player does not exist.");
 	            return "error";
-	        }	        
-	        if (groupNumber == 1) selectedSet.setGroup1ServingPlayerId(playerId);
-	        else selectedSet.setGroup2ServingPlayerId(playerId);
+	        }
+	        if (groupNumber == 1) {
+	            selectedSet.setGroup1ServingPlayerId(playerId);
+	            selectedSet.setGroup2ServingPlayerId(null);
+	        } else {
+	            selectedSet.setGroup1ServingPlayerId(null);
+	            selectedSet.setGroup2ServingPlayerId(playerId);
+	        }
 	        exhibitionMatchRepository.save(exhibitionMatch);
 	        return showExhibitionSet(matchId, setIndex, model);
 	    } catch (IOException | IllegalArgumentException ex) {
-	        model.addAttribute("error_message", "Unable to update serving player.");
+	        model.addAttribute("error_message", "Unable to update Exhibition serving player.");
 	        return "error";
 	    }
 	}
-	
+
 	private boolean repairExhibitionServingPlayers(ExhibitionSet selectedSet, ExhibitionMatch exhibitionMatch) throws IOException {
 	    List<Integer> group1 = selectedSet.getGroup1PlayerIds();
 	    List<Integer> group2 = selectedSet.getGroup2PlayerIds();
 	    if (group1 == null || group1.isEmpty() || group2 == null || group2.isEmpty() || group1.stream().anyMatch(id -> id == null) || group2.stream().anyMatch(id -> id == null)) return false;
 	    if (group1.stream().anyMatch(id -> tennisService.getPlayer(id) == null) || group2.stream().anyMatch(id -> tennisService.getPlayer(id) == null)) return false;
-	    boolean changed = false;
 	    Integer server1 = selectedSet.getGroup1ServingPlayerId();
 	    Integer server2 = selectedSet.getGroup2ServingPlayerId();
-	    if (server1 == null || !group1.contains(server1)) {
-	        selectedSet.setGroup1ServingPlayerId(group1.get(0));
-	        changed = true;
-	    }
-	    if (server2 == null || !group2.contains(server2)) {
-	        selectedSet.setGroup2ServingPlayerId(group2.get(0));
-	        changed = true;
-	    }
+	    boolean validServer1 = server1 != null && group1.contains(server1);
+	    boolean validServer2 = server2 != null && group2.contains(server2);
+	    Integer activeServer1 = validServer1 ? server1 : null;
+	    Integer activeServer2 = validServer2 ? server2 : null;
+	    if (activeServer1 == null && activeServer2 == null) activeServer1 = group1.get(0);
+	    selectedSet.setGroup1ServingPlayerId(activeServer1);
+	    selectedSet.setGroup2ServingPlayerId(activeServer1 == null ? activeServer2 : null);
+	    boolean changed = !java.util.Objects.equals(server1, selectedSet.getGroup1ServingPlayerId()) || !java.util.Objects.equals(server2, selectedSet.getGroup2ServingPlayerId());
 	    if (changed) exhibitionMatchRepository.save(exhibitionMatch);
 	    return true;
 	}
@@ -434,6 +552,21 @@ public class ExhibitionController {
 	    }
 	}
 	
+
+    private void addExhibitionPlayerNames(ModelMap model, List<ExhibitionMatch> matches) {
+        Map<Integer, String> playerNames = new java.util.HashMap<>();
+        if (matches != null) {
+            for (ExhibitionMatch match : matches) {
+                if (match.getSets() == null) continue;
+                for (ExhibitionSet set : match.getSets()) {
+                    if (set.getGroup1PlayerIds() != null) for (Integer playerId : set.getGroup1PlayerIds()) playerNames.put(playerId, getExhibitionPlayerName(playerId));
+                    if (set.getGroup2PlayerIds() != null) for (Integer playerId : set.getGroup2PlayerIds()) playerNames.put(playerId, getExhibitionPlayerName(playerId));
+                }
+            }
+        }
+        model.addAttribute("playerNames", playerNames);
+    }
+
 	private String getExhibitionPlayerName(Integer playerId) {
 	    if (playerId == null) return "Unknown player";
 	    Player player = tennisService.getPlayer(playerId);

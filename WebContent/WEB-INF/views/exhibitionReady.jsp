@@ -13,6 +13,7 @@
     <div class="card">
         <div class="card-header"><h3>Exhibition Match Ready</h3></div>
         <div class="card-body">
+            <c:if test="${not empty exhibitionMatch}">
             <p><strong>Competition:</strong> <c:out value="${exhibitionMatch.competitionName}"/></p>
             <p><strong>Match:</strong> <c:out value="${exhibitionMatch.matchTitle}"/></p>
             <p><strong>Group 1:</strong> <c:out value="${exhibitionMatch.group1Name}"/></p>
@@ -26,23 +27,16 @@
                     <h6>Set ${set.setNumber}: <c:out value="${set.setName}"/></h6>
                     <p>Type: <c:out value="${set.setType}"/></p>
                     <p>Format: <c:out value="${set.matchStyle}"/></p>
-                    <p>Group 1 Player IDs: <c:forEach items="${set.group1PlayerIds}" var="playerId" varStatus="s"><c:if test="${!s.first}">, </c:if><c:out value="${playerId}"/></c:forEach></p>
-                    <p>Group 2 Player IDs: <c:forEach items="${set.group2PlayerIds}" var="playerId" varStatus="s"><c:if test="${!s.first}">, </c:if><c:out value="${playerId}"/></c:forEach></p>
+                    <p><strong>Group 1 Players:</strong> <c:forEach items="${set.group1PlayerIds}" var="playerId" varStatus="s"><c:if test="${!s.first}">, </c:if><c:out value="${playerNames[playerId]}"/> <small class="text-muted">(ID: <c:out value="${playerId}"/>)</small></c:forEach></p>
+                    <p><strong>Group 2 Players:</strong> <c:forEach items="${set.group2PlayerIds}" var="playerId" varStatus="s"><c:if test="${!s.first}">, </c:if><c:out value="${playerNames[playerId]}"/> <small class="text-muted">(ID: <c:out value="${playerId}"/>)</small></c:forEach></p>
                     <p>Status: <c:out value="${set.setStatus}"/></p>
                 </div>
             </c:forEach>
-            <form action="<c:url value='/exhibition/logger'/>" method="POST">
-                <input type="hidden" name="matchId" value="<c:out value='${exhibitionMatch.matchId}'/>"/>
-                <button type="submit" class="btn btn-primary">Open Exhibition Logger</button>
-            </form>
-            <button type="button" class="btn btn-secondary mt-2" onclick="history.back()">Back</button>
-
-        <div class="card mt-4">
+            </c:if>
+<div class="card mt-4">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h4 class="mb-0">Saved Exhibition Matches</h4>
-                <form action="<c:url value='/exhibition/setup'/>" method="POST">
-                    <button type="submit" class="btn btn-success">New Exhibition Match</button>
-                </form>
+                <a href="<c:url value='/exhibition/setup'/>" class="btn btn-success">SETUP / NEW MATCH</a>
             </div>
             <div class="card-body">
                 <c:if test="${not empty savedMatchesError}">
@@ -84,6 +78,10 @@
                                                 <form action="<c:url value='/exhibition/logger'/>" method="POST">
                                                     <input type="hidden" name="matchId" value="<c:out value='${match.matchId}'/>"/>
                                                     <button type="submit" class="btn btn-primary btn-sm">Open Match</button>
+                                                </form>
+                                                <form action="<c:url value='/exhibition/setup'/>" method="GET" class="mt-2">
+                                                    <input type="hidden" name="matchId" value="<c:out value='${match.matchId}'/>"/>
+                                                    <button type="submit" class="btn btn-outline-primary btn-sm">Setup / Edit</button>
                                                 </form>
                                             </td>
                                         </tr>

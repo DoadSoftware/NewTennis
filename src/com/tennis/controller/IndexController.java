@@ -288,9 +288,6 @@ public class IndexController
 			@RequestParam(value = "valueToProcess", required = false, defaultValue = "") String valueToProcess)
 					throws JAXBException, IllegalAccessException, InvocationTargetException, IOException, NumberFormatException, InterruptedException
 	{	
-		
-		
-		
 		switch (whatToProcess.toUpperCase()) {
 		case "READ_MATCH_DATA":
 			

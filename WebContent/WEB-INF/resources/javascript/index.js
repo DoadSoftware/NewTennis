@@ -546,7 +546,7 @@ function processUserSelection(whichInput)
 	case 'load_scene_btn':
 	    if ($('#matchFormat').val() === 'EXHIBITION') {
 	        document.initialise_form.method = 'post';
-	        document.initialise_form.action = 'exhibition/setup';
+	        document.initialise_form.action = 'exhibition/ready';
 	        document.initialise_form.submit();
 	    } else {
 	        document.initialise_form.method = 'post';
